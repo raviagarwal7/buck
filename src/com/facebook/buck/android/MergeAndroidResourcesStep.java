@@ -67,6 +67,7 @@ public class MergeAndroidResourcesStep implements Step {
   private final EnumSet<RType> bannedDuplicateResourceTypes;
   private final Optional<String> unionPackage;
   private final String rName;
+  private final boolean useOldStyleableFormat;
 
   /**
    * Merges text symbols files from {@code aapt} for each of the input {@code android_resource}
@@ -84,7 +85,8 @@ public class MergeAndroidResourcesStep implements Step {
       boolean forceFinalResourceIds,
       EnumSet<RType> bannedDuplicateResourceTypes,
       Optional<String> unionPackage,
-      Optional<String> rName) {
+      Optional<String> rName,
+      boolean useOldStyleableFormat) {
     this.filesystem = filesystem;
     this.pathResolver = pathResolver;
     this.androidResourceDeps = ImmutableList.copyOf(androidResourceDeps);
@@ -94,6 +96,7 @@ public class MergeAndroidResourcesStep implements Step {
     this.bannedDuplicateResourceTypes = bannedDuplicateResourceTypes;
     this.unionPackage = unionPackage;
     this.rName = rName.orElse("R");
+    this.useOldStyleableFormat = useOldStyleableFormat;
   }
 
   public static MergeAndroidResourcesStep createStepForDummyRDotJava(
@@ -103,7 +106,8 @@ public class MergeAndroidResourcesStep implements Step {
       Path outputDir,
       boolean forceFinalResourceIds,
       Optional<String> unionPackage,
-      Optional<String> rName) {
+      Optional<String> rName,
+      boolean useOldStyleableFormat) {
     return new MergeAndroidResourcesStep(
         filesystem,
         pathResolver,
@@ -113,7 +117,8 @@ public class MergeAndroidResourcesStep implements Step {
         forceFinalResourceIds,
         /* bannedDuplicateResourceTypes */ EnumSet.noneOf(RType.class),
         unionPackage,
-        rName);
+        rName,
+        useOldStyleableFormat);
   }
 
   public static MergeAndroidResourcesStep createStepForUberRDotJava(
@@ -123,7 +128,8 @@ public class MergeAndroidResourcesStep implements Step {
       Path uberRDotTxt,
       Path outputDir,
       EnumSet<RType> bannedDuplicateResourceTypes,
-      Optional<String> unionPackage) {
+      Optional<String> unionPackage,
+      boolean useOldStyleableFormat) {
     return new MergeAndroidResourcesStep(
         filesystem,
         pathResolver,
@@ -133,7 +139,8 @@ public class MergeAndroidResourcesStep implements Step {
         /* forceFinalResourceIds */ true,
         bannedDuplicateResourceTypes,
         unionPackage,
-        /* rName */ Optional.empty());
+        /* rName */ Optional.empty(),
+        useOldStyleableFormat);
   }
 
   public ImmutableSortedSet<Path> getRDotJavaFiles() {
@@ -204,7 +211,8 @@ public class MergeAndroidResourcesStep implements Step {
         uberRDotTxtIds,
         symbolsFileToResourceDeps.build(),
         bannedDuplicateResourceTypes,
-        filesystem);
+        filesystem,
+        useOldStyleableFormat);
 
     // If a resource_union_package was specified, copy all resource into that package,
     // unless they are already present.
@@ -321,7 +329,8 @@ public class MergeAndroidResourcesStep implements Step {
       Optional<ImmutableMap<RDotTxtEntry, String>> uberRDotTxtIds,
       ImmutableMap<Path, HasAndroidResourceDeps> symbolsFileToResourceDeps,
       EnumSet<RType> bannedDuplicateResourceTypes,
-      ProjectFilesystem filesystem) throws DuplicateResourceException {
+      ProjectFilesystem filesystem,
+      boolean useOldStyleableFormat) throws DuplicateResourceException {
     // If we're reenumerating, start at 0x7f01001 so that the resulting file is human readable.
     // This value range (0x7f010001 - ...) is easier to spot as an actual resource id instead of
     // other values in styleable which can be enumerated integers starting at 0.
@@ -365,10 +374,13 @@ public class MergeAndroidResourcesStep implements Step {
           }
           resource = resource.copyWithNewIdValue(finalIds.get(resource));
 
-        } else if (resourceToIdValuesMap.get(resource) != null) {
+        } else if (!useOldStyleableFormat && resourceToIdValuesMap.get(resource) != null) {
           resource = resource.copyWithNewIdValue(resourceToIdValuesMap.get(resource));
 
-        } else if (resource.idType == IdType.INT_ARRAY && resource.type == RType.STYLEABLE) {
+        } else if (!useOldStyleableFormat &&
+            resource.idType == IdType.INT_ARRAY &&
+            resource.type == RType.STYLEABLE) {
+
           Map<RDotTxtEntry, String> styleableResourcesMap = getStyleableResources(
               resourceToIdValuesMap, linesInSymbolsFile, resource.name, index + 1
           );
