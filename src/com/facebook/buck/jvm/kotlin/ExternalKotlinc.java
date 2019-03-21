@@ -16,8 +16,6 @@
 
 package com.facebook.buck.jvm.kotlin;
 
-import static com.google.common.collect.Iterables.transform;
-
 import com.facebook.buck.core.build.execution.context.StepExecutionContext;
 import com.facebook.buck.core.exceptions.HumanReadableException;
 import com.facebook.buck.core.model.BuildTarget;
@@ -42,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** kotlinc implemented as a separate binary. */
 public class ExternalKotlinc implements Kotlinc, AddsToRuleKey {
@@ -50,6 +49,7 @@ public class ExternalKotlinc implements Kotlinc, AddsToRuleKey {
       ImmutableKotlincVersion.ofImpl("unknown version");
 
   private final Path pathToKotlinc;
+
   private final Supplier<KotlincVersion> version;
   @AddToRuleKey private final String kotlinCompilerVersion;
 
@@ -104,6 +104,7 @@ public class ExternalKotlinc implements Kotlinc, AddsToRuleKey {
   public int buildWithClasspath(
       StepExecutionContext context,
       BuildTarget invokingRule,
+      ImmutableList<Path> kotlinHomeLibraries,
       ImmutableList<String> options,
       ImmutableSortedSet<Path> kotlinSourceFilePaths,
       Path pathToSrcsList,
@@ -131,9 +132,10 @@ public class ExternalKotlinc implements Kotlinc, AddsToRuleKey {
             .add(pathToKotlinc.toString())
             .addAll(options)
             .addAll(
-                transform(
-                    expandedSources,
-                    path -> projectFilesystem.resolve(path).toAbsolutePath().toString()))
+                expandedSources
+                    .stream()
+                    .map(path -> projectFilesystem.resolve(path).toAbsolutePath().toString())
+                    .collect(Collectors.toList()))
             .build();
 
     // Run the command
@@ -192,13 +194,23 @@ public class ExternalKotlinc implements Kotlinc, AddsToRuleKey {
   }
 
   @Override
-  public Path getStdlibPath(SourcePathResolverAdapter sourcePathResolverAdapter) {
+  public Path getAbiGenerationPlugin(SourcePathResolverAdapter sourcePathResolver) {
+    throw new IllegalStateException("Not supported yet");
+  }
+
+  @Override
+  public Path getStdlibPath(SourcePathResolverAdapter sourcePathResolver) {
     throw new IllegalStateException("Not supported yet");
   }
 
   @Override
   public ImmutableList<Path> getAdditionalClasspathEntries(
       SourcePathResolverAdapter sourcePathResolverAdapter) {
+    return ImmutableList.of();
+  }
+
+  @Override
+  public ImmutableList<Path> getHomeLibraries(SourcePathResolverAdapter sourcePathResolver) {
     return ImmutableList.of();
   }
 

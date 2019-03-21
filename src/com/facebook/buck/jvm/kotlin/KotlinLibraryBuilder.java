@@ -36,11 +36,10 @@ final class KotlinLibraryBuilder {
       ToolchainProvider toolchainProvider,
       BuildRuleParams params,
       ActionGraphBuilder graphBuilder,
-      KotlinBuckConfig kotlinBuckConfig,
+      KotlinConfiguredCompilerFactory compilerFactory,
       JavaBuckConfig javaBuckConfig,
       DownwardApiConfig downwardApiConfig,
       KotlinLibraryDescription.CoreArg args,
-      JavacFactory javacFactory,
       CellPathResolver cellPathResolver) {
     return new DefaultJavaLibraryRules.Builder(
         buildTarget,
@@ -48,7 +47,7 @@ final class KotlinLibraryBuilder {
         toolchainProvider,
         params,
         graphBuilder,
-        new KotlinConfiguredCompilerFactory(kotlinBuckConfig, downwardApiConfig, javacFactory),
+        compilerFactory,
         javaBuckConfig,
         downwardApiConfig,
         args,

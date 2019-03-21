@@ -50,10 +50,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /** Description for kotlin_test. */
 public class KotlinTestDescription
@@ -66,6 +66,7 @@ public class KotlinTestDescription
   private final Function<TargetConfiguration, JavaOptions> javaOptionsForTests;
   private final Function<TargetConfiguration, JavaOptions> java11OptionsForTests;
   private final JavacFactory javacFactory;
+  private final KotlinConfiguredCompilerFactory compilerFactory;
   private final LoadingCache<TargetConfiguration, JavacOptions> defaultJavacOptions;
 
   public KotlinTestDescription(
@@ -92,6 +93,7 @@ public class KotlinTestDescription
                   }
                 });
     this.downwardApiConfig = downwardApiConfig;
+    this.compilerFactory = new KotlinConfiguredCompilerFactory(kotlinBuckConfig, downwardApiConfig, javacFactory);
   }
 
   @Override
@@ -124,11 +126,10 @@ public class KotlinTestDescription
                 context.getToolchainProvider(),
                 params,
                 graphBuilder,
-                kotlinBuckConfig,
+                compilerFactory,
                 javaBuckConfig,
                 downwardApiConfig,
                 args,
-                javacFactory,
                 context.getCellPathResolver())
             .setJavacOptions(javacOptions)
             .build();
@@ -165,7 +166,7 @@ public class KotlinTestDescription
         javaRuntimeConfig
             .apply(buildTarget.getTargetConfiguration())
             .getJavaRuntimeLauncher(graphBuilder, buildTarget.getTargetConfiguration()),
-        Lists.transform(args.getVmArgs(), macrosConverter::convert),
+        args.getVmArgs().stream().map(macrosConverter::convert).collect(Collectors.toList()),
         ImmutableMap.of(), /* nativeLibsEnvironment */
         args.getTestRuleTimeoutMs()
             .map(Optional::of)
@@ -196,6 +197,8 @@ public class KotlinTestDescription
     javaOptionsForTests
         .apply(buildTarget.getTargetConfiguration())
         .addParseTimeDeps(targetGraphOnlyDepsBuilder, buildTarget.getTargetConfiguration());
+    compilerFactory.addTargetDeps(
+        buildTarget.getTargetConfiguration(), extraDepsBuilder, targetGraphOnlyDepsBuilder);
   }
 
   @RuleArg

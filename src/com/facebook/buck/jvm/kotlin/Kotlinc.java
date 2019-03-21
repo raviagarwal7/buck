@@ -20,6 +20,7 @@ import static com.facebook.buck.jvm.java.JavaPaths.SRC_JAR;
 import static com.facebook.buck.jvm.java.JavaPaths.SRC_ZIP;
 
 import com.facebook.buck.core.build.execution.context.StepExecutionContext;
+import com.facebook.buck.core.filesystems.AbsPath;
 import com.facebook.buck.core.model.BuildTarget;
 import com.facebook.buck.core.sourcepath.resolver.SourcePathResolverAdapter;
 import com.facebook.buck.core.toolchain.tool.Tool;
@@ -42,6 +43,7 @@ public interface Kotlinc extends Tool {
   int buildWithClasspath(
       StepExecutionContext context,
       BuildTarget invokingRule,
+      ImmutableList<Path> kotlinHomeLibraries,
       ImmutableList<String> options,
       ImmutableSortedSet<Path> kotlinSourceFilePaths,
       Path pathToSrcsList,
@@ -59,10 +61,14 @@ public interface Kotlinc extends Tool {
 
   Path getAnnotationProcessorPath(SourcePathResolverAdapter sourcePathResolverAdapter);
 
-  Path getStdlibPath(SourcePathResolverAdapter sourcePathResolverAdapter);
+  Path getAbiGenerationPlugin(SourcePathResolverAdapter sourcePathResolver);
+
+  Path getStdlibPath(SourcePathResolverAdapter sourcePathResolver);
 
   ImmutableList<Path> getAdditionalClasspathEntries(
       SourcePathResolverAdapter sourcePathResolverAdapter);
+
+  ImmutableList<Path> getHomeLibraries(SourcePathResolverAdapter sourcePathResolver);
 
   default ImmutableList<Path> getExpandedSourcePaths(
       ProjectFilesystem projectFilesystem,
@@ -90,7 +96,8 @@ public interface Kotlinc extends Tool {
                     projectFilesystem.resolve(workingDirectory.orElse(path)),
                     ExistingFileMode.OVERWRITE);
         sources.addAll(
-            zipPaths.stream()
+            zipPaths
+                .stream()
                 .filter(
                     input ->
                         input.toString().endsWith(".kt")

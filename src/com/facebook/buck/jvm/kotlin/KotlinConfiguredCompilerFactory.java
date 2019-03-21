@@ -23,6 +23,7 @@ import com.facebook.buck.core.rules.BuildRuleResolver;
 import com.facebook.buck.core.sourcepath.SourcePath;
 import com.facebook.buck.core.toolchain.ToolchainProvider;
 import com.facebook.buck.downwardapi.config.DownwardApiConfig;
+import com.facebook.buck.core.util.Optionals;
 import com.facebook.buck.jvm.core.HasJavaAbi;
 import com.facebook.buck.jvm.java.CompileToJarStepFactory;
 import com.facebook.buck.jvm.java.ConfiguredCompilerFactory;
@@ -34,9 +35,9 @@ import com.facebook.buck.jvm.java.JvmLibraryArg;
 import com.facebook.buck.jvm.java.abi.AbiGenerationMode;
 import com.facebook.buck.jvm.kotlin.KotlinLibraryDescription.AnnotationProcessingTool;
 import com.facebook.buck.jvm.kotlin.KotlinLibraryDescription.CoreArg;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -82,12 +83,10 @@ public class KotlinConfiguredCompilerFactory extends ConfiguredCompilerFactory {
       TargetConfiguration targetConfiguration,
       ToolchainProvider toolchainProvider) {
     CoreArg kotlinArgs = Objects.requireNonNull((CoreArg) args);
-    Path pathToAbiGenerationPluginJar =
-        shouldGenerateSourceAbi() ? kotlinBuckConfig.getPathToAbiGenerationPluginJar() : null;
+
     return new KotlincToJarStepFactory(
         kotlinBuckConfig.getKotlinc(),
-        kotlinBuckConfig.getKotlinHomeLibraries(),
-        pathToAbiGenerationPluginJar,
+        shouldGenerateSourceAbi(),
         kotlinArgs.getExtraKotlincArguments(),
         kotlinArgs.getKotlinCompilerPlugins(),
         getFriendSourcePaths(buildRuleResolver, kotlinArgs.getFriendPaths(), kotlinBuckConfig),
@@ -180,5 +179,13 @@ public class KotlinConfiguredCompilerFactory extends ConfiguredCompilerFactory {
     }
 
     return target;
+  }
+
+  @Override
+  public void addTargetDeps(
+      TargetConfiguration targetConfiguration,
+      ImmutableCollection.Builder<BuildTarget> extraDepsBuilder,
+      ImmutableCollection.Builder<BuildTarget> targetGraphOnlyDepsBuilder) {
+    Optionals.addIfPresent(kotlinBuckConfig.getKotlinHomeTarget(), extraDepsBuilder);
   }
 }

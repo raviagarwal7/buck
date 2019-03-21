@@ -63,10 +63,10 @@ public class KotlinLibraryDescription
       ImmutableSet.of(JavaLibrary.SRC_JAR, JavaLibrary.MAVEN_JAR);
 
   private final ToolchainProvider toolchainProvider;
-  private final KotlinBuckConfig kotlinBuckConfig;
   private final JavaBuckConfig javaBuckConfig;
   private final JavacFactory javacFactory;
   private final DownwardApiConfig downwardApiConfig;
+  private final KotlinConfiguredCompilerFactory compilerFactory;
 
   public KotlinLibraryDescription(
       ToolchainProvider toolchainProvider,
@@ -74,10 +74,10 @@ public class KotlinLibraryDescription
       JavaBuckConfig javaBuckConfig,
       DownwardApiConfig downwardApiConfig) {
     this.toolchainProvider = toolchainProvider;
-    this.kotlinBuckConfig = kotlinBuckConfig;
     this.javaBuckConfig = javaBuckConfig;
     this.javacFactory = JavacFactory.getDefault(toolchainProvider);
     this.downwardApiConfig = downwardApiConfig;
+    this.compilerFactory = new KotlinConfiguredCompilerFactory(kotlinBuckConfig, downwardApiConfig, javacFactory);
   }
 
   @Override
@@ -150,11 +150,10 @@ public class KotlinLibraryDescription
                 context.getToolchainProvider(),
                 params,
                 graphBuilder,
-                kotlinBuckConfig,
+                compilerFactory,
                 javaBuckConfig,
                 downwardApiConfig,
                 args,
-                javacFactory,
                 context.getCellPathResolver())
             .setJavacOptions(javacOptions)
             .build();
@@ -190,6 +189,8 @@ public class KotlinLibraryDescription
       ImmutableCollection.Builder<BuildTarget> targetGraphOnlyDepsBuilder) {
     javacFactory.addParseTimeDeps(
         targetGraphOnlyDepsBuilder, constructorArg, buildTarget.getTargetConfiguration());
+    compilerFactory.addTargetDeps(
+        buildTarget.getTargetConfiguration(), extraDepsBuilder, targetGraphOnlyDepsBuilder);
   }
 
   public enum AnnotationProcessingTool {

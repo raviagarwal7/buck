@@ -93,9 +93,7 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
   @AddToRuleKey private final Javac javac;
   @AddToRuleKey private final JavacOptions javacOptions;
   @AddToRuleKey private final boolean withDownwardApi;
-
-  private final ImmutableSortedSet<Path> kotlinHomeLibraries;
-  @Nullable private final Path abiGenerationPlugin;
+  @AddToRuleKey private final boolean abiGenerationEnabled;
 
   private static final String PLUGIN = "-P";
   private static final String APT_MODE = "aptMode=";
@@ -123,8 +121,7 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
 
   KotlincToJarStepFactory(
       Kotlinc kotlinc,
-      ImmutableSortedSet<Path> kotlinHomeLibraries,
-      @Nullable Path abiGenerationPlugin,
+      boolean abiGenerationEnabled,
       ImmutableList<String> extraKotlincArguments,
       ImmutableMap<SourcePath, ImmutableMap<String, String>> kotlinCompilerPlugins,
       ImmutableList<SourcePath> friendPaths,
@@ -135,8 +132,7 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
       JavacOptions javacOptions,
       boolean withDownwardApi) {
     this.kotlinc = kotlinc;
-    this.kotlinHomeLibraries = kotlinHomeLibraries;
-    this.abiGenerationPlugin = abiGenerationPlugin;
+    this.abiGenerationEnabled = abiGenerationEnabled;
     this.extraKotlincArguments = extraKotlincArguments;
     this.kotlinCompilerPlugins = kotlinCompilerPlugins;
     this.friendPaths = friendPaths;
@@ -208,7 +204,7 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
                       .map(AbsPath::getPath)
                       .iterator())
               .addAll(declaredClasspathEntries)
-              .addAll(kotlinHomeLibraries)
+              .addAll(kotlinc.getHomeLibraries(buildContext.getSourcePathResolver()))
               .build();
 
       SourcePathResolverAdapter resolver = buildContext.getSourcePathResolver();
@@ -336,11 +332,12 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
           });
 
       AbsPath tmpSourceAbiFolder;
-      if (abiGenerationPlugin != null) {
+      if (abiGenerationEnabled || kotlinc.getAbiGenerationPlugin(resolver) != null) {
         tmpSourceAbiFolder =
             projectFilesystem.resolve(
                 JavaAbis.getTmpGenPathForSourceAbi(projectFilesystem, invokingRule));
-        extraArguments.add("-Xplugin=" + abiGenerationPlugin);
+        extraArguments.add("-Xplugin=" + kotlinc.getAbiGenerationPlugin(resolver));
+
         extraArguments.add(
             "-P", "plugin:org.jetbrains.kotlin.jvm.abi:outputDir=" + tmpSourceAbiFolder);
       }
@@ -353,6 +350,7 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
               pathToSrcsList,
               allClasspaths,
               kotlinc,
+              kotlinc.getHomeLibraries(buildContext.getSourcePathResolver()),
               extraArguments.build(),
               ImmutableList.of(VERBOSE),
               projectFilesystem,

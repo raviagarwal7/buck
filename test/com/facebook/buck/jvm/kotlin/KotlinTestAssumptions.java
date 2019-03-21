@@ -33,7 +33,11 @@ public abstract class KotlinTestAssumptions {
   public static void assumeCompilerAvailable(@Nullable BuckConfig config) {
     Throwable exception = null;
     try {
+<<<<<<< HEAD
       new KotlinBuckConfig(config == null ? FakeBuckConfig.empty() : config).getPathToCompilerJar();
+=======
+      new KotlinBuckConfig(config == null ? FakeBuckConfig.builder().build() : config);
+>>>>>>> 8f42d36fd0... Make kotlin_home buck config support specifying source path
     } catch (HumanReadableException e) {
       exception = e;
     }
