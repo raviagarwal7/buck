@@ -58,7 +58,6 @@ public class KotlinBuckConfig implements ConfigView<BuckConfig> {
               delegate.getPathSourcePath(getPathToStdlibJar()),
               delegate.getPathSourcePath(getPathToReflectJar()),
               delegate.getPathSourcePath(getPathToScriptRuntimeJar()),
-              delegate.getPathSourcePath(getPathToAnnotationsJar()),
               delegate.getPathSourcePath(getPathToCompilerJar()));
 
       return new JarBackedReflectedKotlinc(
@@ -72,9 +71,7 @@ public class KotlinBuckConfig implements ConfigView<BuckConfig> {
             getPathToStdlibJar(),
             getPathToReflectJar(),
             getPathToScriptRuntimeJar(),
-            getPathToCompilerJar(),
-            getPathToTrove4jJar(),
-            getPathToAnnotationsJar()));
+            getPathToCompilerJar()));
   }
 
   public boolean shouldCompileAgainstAbis() {
@@ -152,25 +149,7 @@ public class KotlinBuckConfig implements ConfigView<BuckConfig> {
    * @return the Kotlin compiler jar path
    */
   Path getPathToCompilerJar() {
-    return getPathToJar("kotlin-compiler");
-  }
-
-  /**
-   * Get the path to the trove4j jar, which is required by the compiler jar.
-   *
-   * @return the trove4j jar path
-   */
-  Path getPathToTrove4jJar() {
-    return getPathToJar("trove4j");
-  }
-
-  /**
-   * Get the path to the annotations jar, which is required by the compiler jar.
-   *
-   * @return the annotations jar path
-   */
-  Path getPathToAnnotationsJar() {
-    return getPathToJar("annotations-13.0");
+    return getPathToJar("kotlin-compiler-embeddable");
   }
 
   /**
@@ -179,7 +158,7 @@ public class KotlinBuckConfig implements ConfigView<BuckConfig> {
    * @return the Kotlin annotation processing jar path
    */
   Path getPathToAnnotationProcessingJar() {
-    return getPathToJar("kotlin-annotation-processing");
+    return getPathToJar("kotlin-annotation-processing-gradle");
   }
 
   /** @return the path to the Kotlin compiler abi generation plugin jar. */
