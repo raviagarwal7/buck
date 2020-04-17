@@ -490,6 +490,7 @@ java_immutables_library(
         "GenerateCodeCoverageReportStep.java",
         "JUnitJvmArgs.java",
         "JUnitStep.java",
+        "DockerShellStep.java",
         "JacocoConstants.java",
         "JarDirectoryStep.java",
         "JavacPipelineState.java",

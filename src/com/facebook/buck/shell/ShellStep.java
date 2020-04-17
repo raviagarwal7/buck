@@ -49,10 +49,11 @@ import javax.annotation.Nullable;
 
 public abstract class ShellStep implements Step {
   private static final Logger LOG = Logger.get(ShellStep.class);
-  private static final OperatingSystemMXBean OS_JMX = ManagementFactory.getOperatingSystemMXBean();
+  protected static final OperatingSystemMXBean OS_JMX =
+      ManagementFactory.getOperatingSystemMXBean();
 
   /** Defined lazily by {@link #getShellCommand(ExecutionContext)}. */
-  @Nullable private ImmutableList<String> shellCommandArgs;
+  @Nullable protected ImmutableList<String> shellCommandArgs;
 
   /**
    * If specified, working directory will be different from build cell root. This should be relative
@@ -64,16 +65,16 @@ public abstract class ShellStep implements Step {
    * This is set if {@link #shouldPrintStdout(Verbosity)} returns {@code true} when the command is
    * executed.
    */
-  private Optional<String> stdout;
+  protected Optional<String> stdout;
 
   /**
    * This is set if {@link #shouldPrintStderr(Verbosity)} returns {@code true} when the command is
    * executed.
    */
-  private Optional<String> stderr;
+  protected Optional<String> stderr;
 
-  private long startTime = 0L;
-  private long endTime = 0L;
+  protected long startTime = 0L;
+  protected long endTime = 0L;
 
   protected ShellStep(Path workingDirectory) {
     this.workingDirectory = Objects.requireNonNull(workingDirectory);
@@ -144,7 +145,7 @@ public abstract class ShellStep implements Step {
   }
 
   @VisibleForTesting
-  void setProcessEnvironment(
+  protected void setProcessEnvironment(
       ExecutionContext context, Map<String, String> environment, String workDir) {
 
     // Replace environment with client environment.
@@ -168,7 +169,7 @@ public abstract class ShellStep implements Step {
   }
 
   @VisibleForTesting
-  ProcessExecutor.Result launchAndInteractWithProcess(
+  protected ProcessExecutor.Result launchAndInteractWithProcess(
       ExecutionContext context, ProcessExecutorParams params)
       throws InterruptedException, IOException {
     ImmutableSet.Builder<Option> options = ImmutableSet.builder();

@@ -20,7 +20,6 @@ import com.facebook.buck.core.build.execution.context.ExecutionContext;
 import com.facebook.buck.core.util.log.Logger;
 import com.facebook.buck.io.ExecutableFinder;
 import com.facebook.buck.io.filesystem.ProjectFilesystem;
-import com.facebook.buck.shell.ShellStep;
 import com.facebook.buck.step.StepExecutionResult;
 import com.facebook.buck.util.MoreSuppliers;
 import com.facebook.buck.util.ProcessExecutor;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class JUnitStep extends ShellStep {
+public class JUnitStep extends DockerShellStep {
   private static final Logger LOG = Logger.get(JUnitStep.class);
 
   private final ProjectFilesystem filesystem;
@@ -102,6 +101,7 @@ public class JUnitStep extends ShellStep {
   @Override
   protected ImmutableList<String> getShellCommandInternal(ExecutionContext context) {
     ImmutableList.Builder<String> args = ImmutableList.builder();
+
     args.addAll(javaRuntimeLauncher);
 
     junitJvmArgs.formatCommandLineArgsToList(
