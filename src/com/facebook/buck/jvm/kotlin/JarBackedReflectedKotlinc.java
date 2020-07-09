@@ -42,7 +42,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,23 +52,29 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
   private static final String EXIT_CODE_CLASS = "org.jetbrains.kotlin.cli.common.ExitCode";
   private static final KotlincVersion VERSION = ImmutableKotlincVersion.ofImpl("in memory");
 
-  private static final String FOLDER_PREFIX = "libexec/lib";
+  private static final String FOLDER_PREFIX = "lib";
 
-  private static final String KOTLIN_ANNOTATION_PROCESSING = "kotlin-annotation-processing-gradle.jar";
+  private static final String KOTLIN_ANNOTATION_PROCESSING = "kotlin-annotation-processing.jar";
 
-  private static final String KOTLIN_COMPILER = "kotlin-compiler-embeddable.jar";
+  private static final String KOTLIN_COMPILER = "kotlin-compiler.jar";
   private static final String KOTLIN_SCRIPT_RUNTIME = "kotlin-script-runtime.jar";
   private static final String KOTLIN_REFLECT = "kotlin-reflect.jar";
   private static final String KOTLIN_STDLIB = "kotlin-stdlib.jar";
+  private static final String KOTLIN_STDLIB_7 = "kotlin-stdlib-jdk7.jar";
+  private static final String KOTLIN_STDLIB_8 = "kotlin-stdlib-jdk8.jar";
+  private static final String KOTLIN_ANNOTATIONS = "annotations-13.0.jar";
 
   private static final String KOTLIN_JVM_ABI_GEN = "jvm-abi-gen.jar";
 
   private static final ImmutableList<String> HOME_LIBRARIES_JAR =
       ImmutableList.of(
           KOTLIN_COMPILER,
-          KOTLIN_REFLECT,
           KOTLIN_SCRIPT_RUNTIME,
-          KOTLIN_STDLIB);
+          KOTLIN_REFLECT,
+          KOTLIN_STDLIB_7,
+          KOTLIN_STDLIB_8,
+          KOTLIN_STDLIB,
+          KOTLIN_ANNOTATIONS);
 
   private static final Function<Path, URL> PATH_TO_URL =
       p -> {
@@ -133,8 +138,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
 
   @Override
   public ImmutableList<Path> getHomeLibraries(SourcePathResolverAdapter sourcePathResolver) {
-    return HOME_LIBRARIES_JAR
-        .stream()
+    return HOME_LIBRARIES_JAR.stream()
         .map(
             jar ->
                 sourcePathResolver
@@ -190,8 +194,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
         ImmutableList.<String>builder()
             .addAll(options)
             .addAll(
-                expandedSources
-                    .stream()
+                expandedSources.stream()
                     .map(path -> projectFilesystem.resolve(path).toAbsolutePath().toString())
                     .collect(Collectors.toList()))
             .build();
