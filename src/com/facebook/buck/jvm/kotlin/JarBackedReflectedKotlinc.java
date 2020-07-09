@@ -18,8 +18,6 @@ package com.facebook.buck.jvm.kotlin;
 
 import com.facebook.buck.core.build.execution.context.StepExecutionContext;
 import com.facebook.buck.core.exceptions.HumanReadableException;
-import com.facebook.buck.core.filesystems.AbsPath;
-import com.facebook.buck.core.filesystems.PathWrapper;
 import com.facebook.buck.core.model.BuildTarget;
 import com.facebook.buck.core.rulekey.AddToRuleKey;
 import com.facebook.buck.core.sourcepath.SourcePath;
@@ -42,6 +40,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -117,7 +116,8 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
     return sourcePathResolver
         .getAbsolutePath(this.kotlinHome)
         .resolve(FOLDER_PREFIX)
-        .resolve(KOTLIN_ANNOTATION_PROCESSING).getPath();
+        .resolve(KOTLIN_ANNOTATION_PROCESSING)
+        .getPath();
   }
 
   @Override
@@ -125,7 +125,8 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
     return sourcePathResolver
         .getAbsolutePath(this.kotlinHome)
         .resolve(FOLDER_PREFIX)
-        .resolve(KOTLIN_STDLIB).getPath();
+        .resolve(KOTLIN_STDLIB)
+        .getPath();
   }
 
   @Override
@@ -133,7 +134,8 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
     return sourcePathResolver
         .getAbsolutePath(this.kotlinHome)
         .resolve(FOLDER_PREFIX)
-        .resolve(KOTLIN_JVM_ABI_GEN).getPath();
+        .resolve(KOTLIN_JVM_ABI_GEN)
+        .getPath();
   }
 
   @Override
@@ -144,7 +146,8 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
                 sourcePathResolver
                     .getAbsolutePath(this.kotlinHome)
                     .resolve(FOLDER_PREFIX)
-                    .resolve(jar).getPath())
+                    .resolve(jar)
+                    .getPath())
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -200,10 +203,7 @@ public class JarBackedReflectedKotlinc implements Kotlinc {
             .build();
 
     Set<String> kotlinHomeLibrariesStringPaths =
-        kotlinHomeLibraries
-            .stream()
-            .map(Path::toString)
-            .collect(Collectors.toSet());
+        kotlinHomeLibraries.stream().map(Path::toString).collect(Collectors.toSet());
 
     try {
       BuckTracing.setCurrentThreadTracingInterface(
